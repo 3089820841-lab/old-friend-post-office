@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旧友邮局</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f7f4ed;
+    color: #3a3a3a;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    width: 100%;
+    max-width: 480px;
+    padding: 48px 28px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    color: #8b7b6b;
+    margin-bottom: 56px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid #d4c8b8;
+    background: #fff;
+    color: #5a4a3a;
+    font-size: 16px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+  .btn:hover {
+    background: #faf7f0;
+  }
+  .btn.secondary {
+    background: transparent;
+    border: 1px dashed #d4c8b8;
+    color: #a09080;
+  }
+  .letter-area {
+    display: none;
+  }
+  .letter-area.active {
+    display: block;
+  }
+  .envelope {
+    background: #fff;
+    padding: 36px 28px;
+    margin-bottom: 32px;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    text-align: left;
+    line-height: 2;
+    font-size: 15px;
+    color: #4a4a4a;
+    min-height: 160px;
+    word-break: break-word;
+  }
+  .envelope .meta {
+    text-align: right;
+    color: #bbb;
+    font-size: 13px;
+    margin-top: 20px;
+  }
+  textarea {
+    width: 100%;
+    height: 200px;
+    padding: 20px;
+    border: 1px solid #e0d8cc;
+    border-radius: 2px;
+    font-size: 15px;
+    line-height: 2;
+    resize: none;
+    background: #fff;
+    color: #4a4a4a;
+    outline: none;
+    font-family: inherit;
+  }
+  textarea:focus {
+    border-color: #c4b8a0;
+  }
+  textarea::placeholder {
+    color: #ccc;
+    letter-spacing: 1px;
+  }
+  .hint {
+    font-size: 12px;
+    color: #c4b8a0;
+    margin-top: 12px;
+    letter-spacing: 1px;
+  }
+  .home-btns { display: block; }
+  .home-btns.hidden { display: none; }
+  .footer {
+    margin-top: 48px;
+    font-size: 12px;
+    color: #c4b8a0;
+    line-height: 2;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 首页 -->
+  <div class="home-btns" id="homeBtns">
+    <h1>旧 友 邮 局</h1>
+    <button class="btn" onclick="openWrite()">投 递</button>
+    <button class="btn secondary" onclick="openReceive()">收 信</button>
+  </div>
+
+  <!-- 收信 -->
+  <div class="letter-area" id="receiveArea">
+    <h1>一 封 信</h1>
+    <div class="envelope" id="letterContent"></div>
+    <button class="btn secondary" onclick="backHome()">返 回</button>
+  </div>
+
+  <!-- 写信 -->
+  <div class="letter-area" id="writeArea">
+    <h1>写 一 封 信</h1>
+    <textarea id="writeInput" placeholder="写下你想说的话..."></textarea>
+    <div class="hint">投递后，你会随机收到另一封信</div>
+    <button class="btn" onclick="sendLetter()">投 递</button>
+    <button class="btn secondary" onclick="backHome()">返 回</button>
+  </div>
+
+  <div class="footer">这里不保证每一句话都是真实发生的<br>但希望每一种情绪都是真实存在的</div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = "oldfriend_letters";
+
+  function getLetters() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch(e) { return []; }
+  }
+
+  function saveLetters(letters) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(letters));
+  }
+
+  function openWrite() {
+    document.getElementById("homeBtns").classList.add("hidden");
+    document.getElementById("writeArea").classList.add("active");
+  }
+
+  function openReceive() {
+    const letters = getLetters();
+    const area = document.getElementById("receiveArea");
+    const content = document.getElementById("letterContent");
+
+    document.getElementById("homeBtns").classList.add("hidden");
+    area.classList.add("active");
+
+    if (letters.length === 0) {
+      content.innerHTML = "<div style='text-align:center;color:#bbb;padding:40px 0;'>信箱还是空的<br><br>投递一封信，才能收到回信</div>";
+    } else {
+      const idx = Math.floor(Math.random() * letters.length);
+      const letter = letters[idx];
+      const time = new Date(letter.time).toLocaleDateString("zh-CN");
+      content.innerHTML = letter.content.replace(/\n/g, "<br>") + "<div class='meta'>" + time + " · 陌生人</div>";
+    }
+  }
+
+  function backHome() {
+    document.getElementById("homeBtns").classList.remove("hidden");
+    document.getElementById("writeArea").classList.remove("active");
+    document.getElementById("receiveArea").classList.remove("active");
+    document.getElementById("writeInput").value = "";
+  }
+
+  function sendLetter() {
+    const text = document.getElementById("writeInput").value.trim();
+    if (!text) return alert("请写下你想说的话");
+
+    const letters = getLetters();
+    letters.push({ content: text, time: Date.now() });
+    saveLetters(letters);
+
+    document.getElementById("writeInput").value = "";
+    document.getElementById("writeArea").classList.remove("active");
+    document.getElementById("receiveArea").classList.add("active");
+
+    // 寄出后立刻随机推送一封
+    const content = document.getElementById("letterContent");
+    if (letters.length <= 1) {
+      content.innerHTML = "<div style='text-align:center;color:#bbb;padding:40px 0;'>你的信已投递<br><br>你是第一位写信的人<br>邀请朋友来写，就能收到回信了</div>";
+    } else {
+      const others = letters.filter((_, i) => i !== letters.length - 1);
+      const idx = Math.floor(Math.random() * others.length);
+      const letter = others[idx];
+      const time = new Date(letter.time).toLocaleDateString("zh-CN");
+      content.innerHTML = letter.content.replace(/\n/g, "<br>") + "<div class='meta'>" + time + " · 陌生人</div>";
+    }
+  }
+</script>
+
+</body>
+</html>
